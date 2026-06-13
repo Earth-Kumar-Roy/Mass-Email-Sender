@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Mass Email Sender</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<style>
+		body {
+			background: radial-gradient(circle at top right, #0f172a, #020617);
+		}
+
+		.neon-border-blue:focus {
+			box-shadow: 0 0 15px rgba(14, 165, 233, 0.4);
+		}
+
+		::-webkit-scrollbar {
+			width: 6px;
+			height: 6px;
+		}
+
+		::-webkit-scrollbar-track {
+			background: rgba(255, 255, 255, 0.01);
+		}
+
+		::-webkit-scrollbar-thumb {
+			background: rgba(14, 165, 233, 0.3);
+			border-radius: 3px;
+		}
+	</style>
+</head>
+
+<body class="text-slate-200 min-h-screen flex items-center justify-center p-4 md:p-8 antialiased">
+
+	<div
+		class="w-full max-w-4xl bg-slate-950/70 backdrop-blur-2xl border border-sky-500/20 rounded-2xl shadow-[0_0_50px_rgba(14,165,233,0.1)] p-6 md:p-8 space-y-6">
+
+		<div
+			class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-800 pb-4 gap-4">
+			<div>
+				<h1
+					class="text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-blue-400 to-indigo-400">
+					MASS EMAIL PROTOCOL - EKR
+				</h1>
+				<p class="text-xs text-sky-500 font-mono tracking-widest mt-1">Can Send 1-50 Emails at once</p>
+			</div>
+		</div>
+
+		<div>
+			<label class="text-xs font-bold uppercase tracking-wider text-sky-400 font-mono block mb-1.5">Sender Profile Name (Display Mask)</label>
+			<input type="text" id="senderName" placeholder="e.g., Earth Kumar Roy"
+        class="w-full bg-slate-900/50 border border-slate-800 rounded-xl p-3 text-sm text-slate-300 placeholder-slate-600 focus:outline-none focus:border-sky-500 neon-border-blue transition-all">
+    </div>
+
+			<div class="space-y-3">
+				<div class="flex items-center justify-between">
+					<label class="text-xs font-bold uppercase tracking-wider text-sky-400 font-mono">Addressing Architecture</label>
+					<div class="flex space-x-4 text-xs">
+						<label class="flex items-center space-x-2 cursor-pointer">
+            <input type="radio" name="addressMode" id="commaRadio" checked onchange="toggleAddressing('comma')" class="accent-sky-500">
+            <span>Comma Vector</span>
+          </label>
+						<label class="flex items-center space-x-2 cursor-pointer">
+            <input type="radio" name="addressMode" id="gridRadio" onchange="toggleAddressing('grid')" class="accent-sky-500">
+            <span>Matrix Nodes (1–50)</span>
+          </label>
+					</div>
+				</div>
+
+				<div id="commaUI">
+					<textarea id="recipientsComma" placeholder="target1@domain.com, target2@domain.com, target3@domain.com" rows="3" oninput="liveValidateComma()"
+          class="w-full bg-slate-900/50 border border-slate-800 rounded-xl p-3 text-sm text-slate-300 placeholder-slate-600 focus:outline-none focus:border-sky-500 neon-border-blue transition-all resize-none"></textarea>
+
+					<div id="invalidEmailsBox"
+						class="hidden mt-2 p-3 bg-red-950/40 border border-red-500/30 rounded-xl text-xs text-red-400 space-y-1.5">
+						<div class="font-bold uppercase tracking-wider flex items-center gap-1.5">⚠ Invalid email
+							formats detected</div>
+						<div id="invalidEmailsList" class="flex flex-wrap gap-1.5 font-mono"></div>
+					</div>
+				</div>
+
+				<div id="gridUI" class="hidden">
+					<div id="gridContainer"
+						class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 max-h-[160px] overflow-y-auto p-1 bg-slate-900/20 border border-slate-800 rounded-xl">
+					</div>
+
+					<div id="invalidGridBox"
+						class="hidden mt-2 p-3 bg-red-950/40 border border-red-500/30 rounded-xl text-xs text-red-400 space-y-1.5">
+						<div class="font-bold uppercase tracking-wider flex items-center gap-1.5">⚠ Invalid email
+							formats in matrix</div>
+						<div id="invalidGridList" class="flex flex-wrap gap-1.5 font-mono"></div>
+					</div>
+				</div>
+			</div>
+
+			<div>
+				<label class="text-xs font-bold uppercase tracking-wider text-sky-400 font-mono block mb-1.5">Subject Heading</label>
+				<input type="text" id="subject" placeholder="Broadcast Entry Subject Line Identifier"
+        class="w-full bg-slate-900/50 border border-slate-800 rounded-xl p-3 text-sm text-slate-300 placeholder-slate-600 focus:outline-none focus:border-sky-500 neon-border-blue transition-all">
+    </div>
+
+				<div>
+					<div
+						class="flex flex-wrap items-center justify-between bg-slate-900/80 border border-slate-800 rounded-t-xl p-2 gap-2">
+						<div class="flex flex-wrap items-center gap-1">
+							<button onclick="execFormat('bold')" class="p-1.5 px-2.5 rounded bg-slate-800 hover:bg-slate-700 text-xs font-bold transition-colors">B</button>
+							<button onclick="execFormat('italic')" class="p-1.5 px-2.5 rounded bg-slate-800 hover:bg-slate-700 text-xs italic transition-colors">I</button>
+							<button onclick="execFormat('underline')" class="p-1.5 px-2.5 rounded bg-slate-800 hover:bg-slate-700 text-xs underline transition-colors">U</button>
+							<button onclick="openLinkOverlay()" class="p-1.5 px-3 rounded bg-sky-950 text-sky-400 border border-sky-500/30 text-xs font-bold hover:bg-sky-900/50 transition-all">🔗 Insert Link</button>
+							<button onclick="openHtmlOverlay()" class="p-1.5 px-3 rounded bg-blue-950 border border-blue-500/30 text-blue-400 text-xs font-bold hover:bg-blue-900/50 transition-all">Inject Raw HTML</button>
+						</div>
+
+						<div class="flex items-center space-x-2 text-xs">
+							<select onchange="execFormat('fontName', this.value)" class="bg-slate-800 border border-slate-700 rounded p-1 text-slate-300 focus:outline-none">
+            <option value="Arial">Arial</option>
+            <option value="Courier New">Courier New</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Verdana">Verdana</option>
+          </select>
+							<select onchange="execFormat('fontSize', this.value)" class="bg-slate-800 border border-slate-700 rounded p-1 text-slate-300 focus:outline-none">
+            <option value="2">Small</option>
+            <option value="3" selected>Normal</option>
+            <option value="5">Large</option>
+          </select>
+							<button onclick="document.getElementById('colorPicker').click()" class="bg-slate-800 border border-slate-700 p-1 px-2 rounded hover:bg-slate-700 transition-all">Color</button>
+							<input type="color" id="colorPicker" class="hidden" onchange="execFormat('foreColor', this.value)">
+        </div>
+						</div>
+
+						<div id="htmlCanvas" contenteditable="true" style="min-height: 220px;"
+							class="w-full bg-slate-900/30 border border-t-0 border-slate-800 rounded-b-xl p-4 text-sm focus:outline-none focus:border-sky-500 overflow-y-auto text-left">
+						</div>
+					</div>
+
+					<div
+						class="p-4 bg-slate-900/40 border border-slate-800/80 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+						<div class="space-y-0.5">
+							<span class="text-xs font-bold text-sky-400 block uppercase tracking-wider font-mono">Payload Integrity</span>
+							<p class="text-xs text-slate-500">Atomic size cap limit constraints set to 10 MB total size
+								structural load.</p>
+						</div>
+						<div class="relative w-full sm:w-auto">
+							<input type="file" id="filesArray" multiple class="hidden" onchange="updateFileStateDisplay()">
+							<button onclick="document.getElementById('filesArray').click()" class="w-full sm:w-auto bg-slate-800 border border-slate-700 text-xs px-4 py-2.5 rounded-lg font-bold hover:bg-slate-700 transition-all flex items-center justify-center space-x-2">
+          <span>📎 Select Documents</span>
+        </button>
+						</div>
+					</div>
+
+					<div id="fileMetricBar" class="hidden justify-between font-mono text-xs text-slate-500 px-1">
+						<span id="fileCount"></span>
+						<span id="fileSize"></span>
+					</div>
+
+					<div id="validationMsg"
+						class="hidden p-4 bg-red-950/40 border border-red-500/30 rounded-xl text-xs text-red-400 space-y-1">
+					</div>
+					<div id="successMsg"
+						class="hidden p-4 bg-emerald-950/40 border border-emerald-500/30 rounded-xl text-xs text-emerald-400 font-medium">
+					</div>
+
+					<div class="pt-2 flex flex-col items-center justify-center space-y-4">
+						<button onclick="startExecutionChain()" id="dispatchBtn" class="w-full bg-gradient-to-r from-sky-600 via-blue-600 to-indigo-600 text-sm font-black uppercase tracking-widest py-3.5 rounded-xl shadow-xl shadow-sky-900/20 hover:opacity-95 active:scale-[0.99] transition-all flex items-center justify-center">
+        <span>Initialize Transmission Batch</span>
+      </button>
+
+						<div id="telemetryBox"
+							class="hidden w-full bg-sky-950/20 border border-sky-500/30 p-3 rounded-xl flex items-center space-x-3 text-xs">
+							<div class="w-2.5 h-2.5 bg-sky-500 rounded-full animate-ping"></div>
+							<span id="telemetryStatus" class="font-mono text-sky-300 tracking-wide uppercase">Pipeline Idle</span>
+						</div>
+					</div>
+				</div>
+
+				<div id="modalOverlay"
+					class="fixed inset-0 bg-black/80 backdrop-blur-md hidden z-50 flex items-center justify-center p-4">
+					<div
+						class="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-xl p-5 space-y-4 shadow-2xl">
+						<div class="flex justify-between items-center">
+							<h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 font-mono">Raw HTML
+								Injection Interface</h3>
+							<button onclick="closeHtmlOverlay()" class="text-slate-500 hover:text-slate-300 text-xl">&times;</button>
+						</div>
+						<textarea id="rawHtmlField" class="w-full h-64 bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-xs text-sky-400 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500" placeholder="<div style='color: blue;'>Markup Structure Block Data</div>"></textarea>
+						<div class="flex justify-end space-x-2">
+							<button onclick="closeHtmlOverlay()" class="px-4 py-2 text-xs bg-slate-800 rounded-lg font-medium hover:bg-slate-700">Cancel</button>
+							<button onclick="applyRawHtml()" class="px-4 py-2 text-xs bg-sky-600 text-white rounded-lg font-bold hover:bg-sky-500">Inject Frame</button>
+						</div>
+					</div>
+				</div>
+
+				<div id="linkOverlay"
+					class="fixed inset-0 bg-black/80 backdrop-blur-md hidden z-50 flex items-center justify-center p-4">
+					<div
+						class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-xl p-5 space-y-4 shadow-2xl">
+						<div class="flex justify-between items-center">
+							<h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 font-mono">Insert
+								Hyperlink Asset</h3>
+							<button onclick="closeLinkOverlay()" class="text-slate-500 hover:text-slate-300 text-xl">&times;</button>
+						</div>
+						<div class="space-y-3">
+							<div>
+								<label class="text-[11px] uppercase tracking-wider text-slate-400 font-mono block mb-1">Name to Display</label>
+								<input type="text" id="hyperlinkNameField" placeholder="e.g., Click Here"
+            class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs font-mono text-sky-400 focus:outline-none focus:border-sky-500">
+        </div>
+								<div>
+									<label class="text-[11px] uppercase tracking-wider text-slate-400 font-mono block mb-1">Link Target URL</label>
+									<input type="text" id="hyperlinkUrlField" placeholder="https://example.com"
+            class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs font-mono text-sky-400 focus:outline-none focus:border-sky-500">
+        </div>
+								</div>
+								<div class="flex justify-end space-x-2 pt-2">
+									<button onclick="closeLinkOverlay()" class="px-4 py-2 text-xs bg-slate-800 rounded-lg font-medium hover:bg-slate-700">Cancel</button>
+									<button onclick="applyHyperlinkNode()" class="px-4 py-2 text-xs bg-sky-600 text-white rounded-lg font-bold hover:bg-sky-500">Apply Link</button>
+								</div>
+							</div>
+						</div>
+
+						<script>
+							let storedRawTemplate = "";
+    let capturedTextSelectionRange = null;
+
+    function isValidEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    function toggleAddressing(mode) {
+      document.getElementById("commaUI").style.display = mode === 'comma' ? 'block' : 'none';
+      document.getElementById("gridUI").style.display = mode === 'grid' ? 'block' : 'none';
+      clearMessages();
+    }
+
+    function buildAddressingGrid() {
+      const parentNode = document.getElementById("gridContainer");
+      parentNode.innerHTML = "";
+      for (let i = 0; i < 50; i++) {
+        const inputField = document.createElement("input");
+        inputField.type = "email";
+        inputField.placeholder = `Node [${String(i + 1).padStart(2, '0')}]`;
+        inputField.className = "bg-slate-950 border border-slate-800 rounded p-2 text-xs text-slate-300 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 w-full transition-colors";
+        inputField.addEventListener("input", liveValidateGrid);
+        parentNode.appendChild(inputField);
+      }
+    }
+
+    function liveValidateComma() {
+      const raw = document.getElementById("recipientsComma").value;
+      const emails = raw.split(",").map(e => e.trim()).filter(e => e);
+      const invalid = emails.filter(e => !isValidEmail(e));
+      const box = document.getElementById("invalidEmailsBox");
+      const list = document.getElementById("invalidEmailsList");
+      
+      if (invalid.length > 0) {
+        list.innerHTML = invalid.map(e => `<span class="px-2 py-0.5 bg-red-950 border border-red-800 rounded text-red-400 m-0.5 select-all">${e}</span>`).join("");
+        box.classList.remove("hidden");
+      } else {
+        box.classList.add("hidden");
+        list.innerHTML = "";
+      }
+    }
+
+    function liveValidateGrid() {
+      const inputs = document.querySelectorAll("#gridContainer input");
+      const invalid = [];
+      
+      inputs.forEach(inp => {
+        const value = inp.value.trim();
+        if (value) {
+          if (!isValidEmail(value)) {
+            inp.classList.add("border-red-500/60", "bg-red-950/20");
+            invalid.push(value);
+          } else {
+            inp.classList.remove("border-red-500/60", "bg-red-950/20");
+            inp.classList.add("border-sky-500/40");
+          }
+        } else {
+          inp.className = "bg-slate-950 border border-slate-800 rounded p-2 text-xs text-slate-300 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 w-full transition-colors";
+        }
+      });
+      
+      const box = document.getElementById("invalidGridBox");
+      const list = document.getElementById("invalidGridList");
+      
+      if (invalid.length > 0) {
+        list.innerHTML = invalid.map(e => `<span class="px-2 py-0.5 bg-red-950 border border-red-800 rounded text-red-400 m-0.5 select-all">${e}</span>`).join("");
+        box.classList.remove("hidden");
+      } else {
+        box.classList.add("hidden");
+        list.innerHTML = "";
+      }
+    }
+
+    function execFormat(command, argument = null) {
+      document.execCommand(command, false, argument);
+      document.getElementById("htmlCanvas").focus();
+    }
+
+    /* Dual-Parameter Interactive Modal Link Injection Framework */
+    function openLinkOverlay() {
+      const selection = window.getSelection();
+      if (selection.rangeCount > 0) {
+        capturedTextSelectionRange = selection.getRangeAt(0).cloneRange();
+        document.getElementById("hyperlinkNameField").value = selection.toString();
+      } else {
+        document.getElementById("hyperlinkNameField").value = "";
+      }
+      document.getElementById("hyperlinkUrlField").value = "";
+      document.getElementById("linkOverlay").classList.remove("hidden");
+    }
+
+    function closeLinkOverlay() {
+      document.getElementById("linkOverlay").classList.add("hidden");
+      capturedTextSelectionRange = null;
+    }
+
+    function applyHyperlinkNode() {
+      const displayName = document.getElementById("hyperlinkNameField").value.trim() || "Link";
+      const targetUrl = document.getElementById("hyperlinkUrlField").value.trim();
+      const canvas = document.getElementById("htmlCanvas");
+      
+      if (!targetUrl) {
+        closeLinkOverlay();
+        return;
+      }
+
+      // Re-format link to append protocol context if absent
+      let formattedUrl = targetUrl;
+      if (!/^https?:\/\//i.test(formattedUrl)) {
+        formattedUrl = 'https://' + formattedUrl;
+      }
+
+      const anchorElement = `<a href="${formattedUrl}" target="_blank" style="color: #38bdf8; text-decoration: underline;">${displayName}</a>`;
+
+      canvas.focus();
+      if (capturedTextSelectionRange) {
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(capturedTextSelectionRange);
+        document.execCommand("insertHTML", false, anchorElement);
+      } else {
+        // Fallback: append inline at end of structure block if focus range was blank
+        canvas.innerHTML += (canvas.innerHTML.endsWith("<br>") || canvas.innerHTML === "") ? anchorElement : (" " + anchorElement);
+      }
+      
+      closeLinkOverlay();
+    }
+
+    function openHtmlOverlay() {
+      document.getElementById("modalOverlay").classList.remove("hidden");
+      document.getElementById("rawHtmlField").value = storedRawTemplate || document.getElementById("htmlCanvas").innerHTML;
+    }
+
+    function closeHtmlOverlay() {
+      document.getElementById("modalOverlay").classList.add("hidden");
+    }
+
+    function applyRawHtml() {
+      const code = document.getElementById("rawHtmlField").value;
+      document.getElementById("htmlCanvas").innerHTML = code;
+      storedRawTemplate = code;
+      closeHtmlOverlay();
+    }
+
+    function updateFileStateDisplay() {
+      const fileList = document.getElementById("filesArray").files;
+      const displayBar = document.getElementById("fileMetricBar");
+      if (!fileList.length) { displayBar.classList.add("hidden"); return; }
+      
+      let totalBytes = 0;
+      for (let i = 0; i < fileList.length; i++) totalBytes += fileList[i].size;
+      const mbConversion = (totalBytes / 1048576).toFixed(2);
+      
+      document.getElementById("fileCount").textContent = `Selected Assets: ${fileList.length} component(s)`;
+      document.getElementById("fileSize").textContent = `Allocated Load: ${mbConversion} / 10.00 MB`;
+      displayBar.classList.remove("hidden");
+      displayBar.classList.toggle("text-red-400", totalBytes > 10485760);
+    }
+
+    function showError(messagesArray) {
+      const box = document.getElementById("validationMsg");
+      box.innerHTML = `<div class="font-bold uppercase mb-1 tracking-wider font-mono text-xs">Transmission Fault Block Found</div><ul class="list-disc list-inside space-y-0.5">` + messagesArray.map(m => `<li>${m}</li>`).join("") + `</ul>`;
+      box.classList.remove("hidden");
+      document.getElementById("successMsg").classList.add("hidden");
+    }
+
+    function showSuccess(messageText) {
+      const box = document.getElementById("successMsg");
+      box.textContent = messageText;
+      box.classList.remove("hidden");
+      document.getElementById("validationMsg").classList.add("hidden");
+    }
+
+    function clearMessages() {
+      document.getElementById("validationMsg").classList.add("hidden");
+      document.getElementById("successMsg").classList.add("hidden");
+    }
+
+    function startExecutionChain() {
+      clearMessages();
+      const isCommaMode = document.getElementById("commaRadio").checked;
+      let targetVectors = [];
+      const validationFaultLogs = [];
+
+      const customSenderName = document.getElementById("senderName").value.trim();
+      if (!customSenderName) validationFaultLogs.push("Parameter Flag Missing: Sender Profile Name Display Mask is required.");
+
+      if (isCommaMode) {
+        const rawValue = document.getElementById("recipientsComma").value;
+        const totalEntries = rawValue.split(",").map(e => e.trim()).filter(e => e);
+        const invalidList = totalEntries.filter(e => !isValidEmail(e));
+        const validList = totalEntries.filter(e => isValidEmail(e));
+        
+        if (totalEntries.length === 0) {
+          validationFaultLogs.push("Addressing Error: Destination matrix can not resolve. Provide at least one recipient address vector.");
+        } else if (invalidList.length > 0) {
+          validationFaultLogs.push(`Syntax Error: Rectify invalid structures inside distribution string before compiling pipeline deployment.`);
+        } else {
+          targetVectors = validList;
+        }
+      } else {
+        const inputNodes = document.querySelectorAll("#gridContainer input");
+        const invalidList = [];
+        
+        inputNodes.forEach(node => {
+          const content = node.value.trim();
+          if (content) {
+            if (!isValidEmail(content)) invalidList.push(content);
+            else targetVectors.push(content);
+          }
+        });
+        
+        if (targetVectors.length === 0 && invalidList.length === 0) {
+          validationFaultLogs.push("Addressing Error: Destination grid arrays are completely vacant.");
+        } else if (invalidList.length > 0) {
+          validationFaultLogs.push(`Syntax Error: Terminate incorrect email inputs discovered inside matrix blocks before routing transactions.`);
+        }
+      }
+
+      const subjectLine = document.getElementById("subject").value.trim();
+      const bodyContent = document.getElementById("htmlCanvas").innerHTML.trim();
+
+      if (!subjectLine) validationFaultLogs.push("Parameter Flag Missing: Subject identifier block must contain string payload parameters.");
+      if (!bodyContent || bodyContent === "<br>") validationFaultLogs.push("Payload Vacant: Base transmission layout workspace cannot resolve while empty.");
+
+      const activeFiles = document.getElementById("filesArray").files;
+      let globalBytesCount = 0;
+      for (let i = 0; i < activeFiles.length; i++) globalBytesCount += activeFiles[i].size;
+      if (globalBytesCount > 10485760) validationFaultLogs.push("Payload Ceiling Restriction: Attachment bytes load array exceeds allocated absolute limit parameters of 10 MB.");
+
+      if (validationFaultLogs.length > 0) {
+        showError(validationFaultLogs);
+        return;
+      }
+
+      const dispatchBtn = document.getElementById("dispatchBtn");
+      const telemetryBox = document.getElementById("telemetryBox");
+      const telemetryStatus = document.getElementById("telemetryStatus");
+
+      dispatchBtn.disabled = true;
+      dispatchBtn.style.opacity = "0.4";
+      telemetryBox.classList.remove("hidden");
+      telemetryStatus.textContent = "Staging tracking blocks & optimizing file arrays pipeline...";
+
+      const dataConversionPromises = [];
+      for (let i = 0; i < activeFiles.length; i++) dataConversionPromises.push(encodeBlobArray(activeFiles[i]));
+
+      Promise.all(dataConversionPromises).then(compiledBlobs => {
+        telemetryStatus.textContent = `Broadcasting packets... Dispatching targets directly to ${targetVectors.length} channel nodes...`;
+
+        if (typeof google !== "undefined" && google.script) {
+          google.script.run
+            .withSuccessHandler(serverSuccessMessage => {
+              showSuccess(serverSuccessMessage + " — Automated task report delivered to your inbox.");
+              clearDashboardStructure();
+              resetPipelineControls();
+            })
+            .withFailureHandler(runtimeExceptionError => {
+              showError(["Critical Pipeline Execution Abort Error: " + runtimeExceptionError.message]);
+              resetPipelineControls();
+            })
+            .sendBulkEmails(targetVectors, subjectLine, bodyContent, customSenderName, compiledBlobs);
+        } else {
+          setTimeout(() => {
+            showSuccess(`✓ Sandbox Local Simulation: ${targetVectors.length} network channel packets transmitted via alias '${customSenderName}'.`);
+            resetPipelineControls();
+          }, 1500);
+        }
+      });
+    }
+
+    function encodeBlobArray(fileReference) {
+      return new Promise(resolve => {
+        const structuralReader = new FileReader();
+        structuralReader.onload = eventObject => {
+          const rawBase64Data = eventObject.target.result.split(',')[1];
+          resolve({ name: fileReference.name, type: fileReference.type, bytes: rawBase64Data });
+        };
+        structuralReader.readAsDataURL(fileReference);
+      });
+    }
+
+    function resetPipelineControls() {
+      const dispatchBtn = document.getElementById("dispatchBtn");
+      dispatchBtn.disabled = false;
+      dispatchBtn.style.opacity = "1";
+      document.getElementById("telemetryBox").classList.add("hidden");
+    }
+
+    function clearDashboardStructure() {
+      document.getElementById("senderName").value = "";
+      document.getElementById("recipientsComma").value = "";
+      document.getElementById("invalidEmailsBox").classList.add("hidden");
+      document.querySelectorAll("#gridContainer input").forEach(node => { 
+        node.value = ""; 
+        node.className = "bg-slate-950 border border-slate-800 rounded p-2 text-xs text-slate-300 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 w-full transition-colors";
+      });
+      document.getElementById("invalidGridBox").classList.add("hidden");
+      document.getElementById("subject").value = "";
+      document.getElementById("htmlCanvas").innerHTML = "";
+      document.getElementById("filesArray").value = "";
+      document.getElementById("fileMetricBar").classList.add("hidden");
+      storedRawTemplate = "";
+    }
+
+    window.onload = buildAddressingGrid;
+						</script>
+</body>
+
+</html>
