@@ -1,5 +1,5 @@
 function doGet() {
-  return HtmlService.createTemplateFromFile('HTMLEmail')
+  return HtmlService.createTemplateFromFile('SendEmail')
     .evaluate()
     .setTitle("Mass Email Sender - EKR")
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
